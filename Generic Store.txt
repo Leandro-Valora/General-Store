@@ -1,0 +1,98 @@
+TODO LIST --> Progetto General Store
+
+- vendite di prodotti online, client server, javadoc , documentazione sul sitema , javafx
+- il client deve essere chiuso prima del server.
+
+
+INFO TECNICHE 
+- link push github → https://github.com/Leandro-Valora/General-Store.git
+- nome database → svalora_database_general_store 
+- user → svalora_ge_store
+- psw → ge_store
+
+
+
+COSA FA LO STORE ?
++ registrazione client con unico admin
+
++ Autenticazione utente password;
+ ++ messaggio accesso effettuato o fallito
+ 
++ database prodotto con id, nome, prezzo, quantità
+
++ pagina dedicata all acquisto dei prodotti
+    ++ visione dei prodotti in tabella
+	++ richiesta acquisto prodotto
+	++ restituzione prodotto
+	
++ richiesta di mettere un nuovo prodotto con solo il nome
+ ++ messaggio di chiusura per il client
+
+
+MODELS
+- Customer (idUser, name, email, password)
+- Product (idProduct, name, price, quantity)
+- Cart (idUser, idProduct, quantity) 
+
+
+TABELLE SERVER
+- Customers
+- Products
+- CustomersProducts
+
+
+QUERY SERVER
+
+CREATE TABLE Customers (
+ Id_Customer int PRIMARY KEY AUTO_INCREMENT,
+ Name VARCHAR(80) NOT NULL,
+ Surname VARCHAR(80) NOT NULL,
+ Email VARCHAR(80) NOT NULL,
+ Psw VARCHAR(80) NOT NULL,
+ Drop_address VARCHAR(80) NOT NULL,
+ City VARCHAR(40) NOT NULL
+);
+
+INSERT INTO Customers (Name, Surname, Email, Psw, Drop_address, City) VALUE 
+('Simon', 'ZEUDJIO-TCHIOFO', 'simon@gmail.com', 'simoneee', 'san pancrazio 12', 'Parma');
+
+-----------------------------------------------------
+
+CREATE TABLE Products (
+ Id_Product int PRIMARY KEY AUTO_INCREMENT,
+ Name VARCHAR(200) NOT NULL, 
+ Price FLOAT(8,2) NOT NULL,
+ Quantity int(255) NOT NULL
+);
+
+INSERT INTO Products (Name, Price, Quantity) VALUES
+('Amarone della Valpolicella', '158.00', 15),
+('Barbaresco', '510.00', 30);
+
+------------------------------------------------------
+
+CREATE TABLE CustomersProducts ( 
+Id_CustomerProd int PRIMARY KEY AUTO_INCREMENT, 
+Id_Customer int,
+Id_Product int,
+ CONSTRAINT fk_customer FOREIGN KEY (Id_Customer) REFERENCES Customers(Id_Customer), 
+CONSTRAINT fk_product FOREIGN KEY (Id_Product) REFERENCES Products(Id_Product),
+DataOrdine datetime DEFAULT CURRENT_TIMESTAMP 
+);
+ -- Inserimento dei dati in
+ CustomersProducts INSERT INTO CustomersProducts (Id_Customer, Id_Product) VALUES (1, 1), -- Simon ha acquistato Amarone della Valpolicella (1, 2)
+
+------------------------------------------------------
+
+CREATE TABLE Admin (
+ Id_admin int PRIMARY KEY AUTO_INCREMENT,
+ Name VARCHAR(20) NOT NULL,
+ Surname VARCHAR(20) NOT NULL,
+ Telphone VARCHAR(13) NOT NULL,
+ Email VARCHAR(40) NOT NULL,
+ Password VARCHAR(40) NOT NULL
+);
+
+INSERT INTO Admin (Name, Surname, Telphone, Email, Password) VALUE
+('Mauro', 'DeValerio', '3102714256', 'maurodivalerio@gmail.com', 'maurovalerio555'),
+('leo', 'valo', '3102714256', 'leo@gmail.com', 'prova123');
