@@ -1,7 +1,5 @@
 package Models;
 
-import java.util.jar.Attributes.Name;
-
 /**
  * @author A. F. Valora
  * @author D. Carattin

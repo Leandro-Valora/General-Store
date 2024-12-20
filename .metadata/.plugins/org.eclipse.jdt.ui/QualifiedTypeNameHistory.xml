@@ -25,17 +25,21 @@
     <fullyQualifiedTypeName name="java.security.MessageDigestSpi"/>
     <fullyQualifiedTypeName name="java.lang.Integer"/>
     <fullyQualifiedTypeName name="Models.data"/>
-    <fullyQualifiedTypeName name="java.lang.String"/>
-    <fullyQualifiedTypeName name="sun.jvm.hotspot.oops.java_lang_Class"/>
     <fullyQualifiedTypeName name="java.net.ServerSocket"/>
     <fullyQualifiedTypeName name="java.net.Socket"/>
     <fullyQualifiedTypeName name="Models.Cart"/>
-    <fullyQualifiedTypeName name="Models.Product"/>
     <fullyQualifiedTypeName name="java.util.jar.Attributes.Name"/>
     <fullyQualifiedTypeName name="Server.ClientHandler"/>
     <fullyQualifiedTypeName name="Models.Customer"/>
     <fullyQualifiedTypeName name="Client.Client"/>
     <fullyQualifiedTypeName name="java.nio.file.SecureDirectoryStream"/>
     <fullyQualifiedTypeName name="java.io.EOFException"/>
+    <fullyQualifiedTypeName name="com.sun.tools.example.debug.expr.JavaCharStream"/>
+    <fullyQualifiedTypeName name="sun.jvm.hotspot.oops.java_lang_Class"/>
+    <fullyQualifiedTypeName name="java.util.List"/>
+    <fullyQualifiedTypeName name="java.util.ArrayList"/>
+    <fullyQualifiedTypeName name="Models.Product"/>
+    <fullyQualifiedTypeName name="java.lang.String"/>
     <fullyQualifiedTypeName name="java.lang.System"/>
+    <fullyQualifiedTypeName name="java.util.Arrays"/>
 </qualifiedTypeNameHistroy>

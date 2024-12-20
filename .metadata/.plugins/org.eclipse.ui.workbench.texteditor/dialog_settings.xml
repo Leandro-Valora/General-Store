@@ -1,27 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
-		<item key="selection" value=""/>
+		<item key="selection" value="Password"/>
 		<item key="wrap" value="true"/>
 		<item key="casesensitive" value="true"/>
 		<item key="wholeword" value="true"/>
 		<item key="incremental" value="false"/>
 		<item key="isRegEx" value="false"/>
 		<list key="findhistory">
-			<item value="benv"/>
-			<item value="ben"/>
-			<item value="benvenuto"/>
-			<item value="username"/>
-			<item value="Errore del server"/>
-			<item value="LoginCustomer"/>
-			<item value="public void Login() throws IOException {"/>
-			<item value="success"/>
-			<item value="jdbcURL"/>
-			<item value=" case &quot;MainFormAdd&quot;:  "/>
-			<item value="name"/>
-			<item value="setName"/>
-			<item value="Costumer"/>
-			<item value="ClientHandler"/>
+			<item value="Password"/>
+			<item value="password"/>
+			<item value="public class Client {"/>
+			<item value="Welcome"/>
+			<item value=".to"/>
+			<item value="\"/>
+			<item value="Option not valid!"/>
+			<item value="View prod"/>
+			<item value="View produ"/>
+			<item value="Welco"/>
 		</list>
 		<list key="replacehistory">
 			<item value="Client.getInstance()."/>
