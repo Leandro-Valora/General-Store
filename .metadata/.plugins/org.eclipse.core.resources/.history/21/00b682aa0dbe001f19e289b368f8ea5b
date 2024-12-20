@@ -1,0 +1,226 @@
+package Server;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.net.Socket;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import Client.Client;
+import Models.Customer;
+import Models.Cart;
+import Models.Product;
+
+import Server.Server.globalConn;
+
+
+public class ClientHandler implements Runnable {
+
+	private Socket socket;
+
+	private DataInputStream input;
+	
+	private DataOutputStream output;
+	
+	private float total;
+	private float pr;
+	
+	private Client client = new Client();
+
+	public ClientHandler(Socket sock) {
+		try {
+			socket = sock;
+			input = new DataInputStream(socket.getInputStream());
+			output = new DataOutputStream(socket.getOutputStream());
+        } catch(IOException e) {
+				e.printStackTrace();
+		}
+	}
+	
+//    public void Login() throws IOException {
+//    	
+//    	Customer customer = new Customer(null, null);
+//    	customer = client.LoginCustomer();
+//        String username = customer.getEmail();
+//        String password = customer.getPassword();  
+//        
+//        System.out.println("--> " + username + " - " + password);
+//
+//        try (Connection con = DriverManager.getConnection(globalConn.jdbcURL, globalConn.usernameDb, globalConn.passwordDb)) {
+//            // Query per recuperare i dati dell'utente dal database
+//            String selectQuery = "SELECT Id_customer, Name, Email, Psw FROM Customers WHERE Email = ? AND Psw = ?";
+//
+//            try (PreparedStatement preparedStatement = con.prepareStatement(selectQuery)) {
+//                preparedStatement.setString(1, username);
+//                preparedStatement.setString(2, password);
+//                ResultSet resultSet = preparedStatement.executeQuery();
+//
+//                if (resultSet.next()) {
+//                    String validUsername = resultSet.getString("Email");
+//                    String validPassword = resultSet.getString("Psw");
+//                    String validName = resultSet.getString("Name");
+//                    String id = String.valueOf(resultSet.getInt("Id_customer"));
+//
+//                    //Employer.setName(validName);
+//                    if (password.equals(validPassword) && username.equals(validUsername) ) {
+//                        System.out.println("Login successful!");
+//                        
+//                        //Costumer.setName(validName);
+//                        Customer.setName(validName);
+//                        
+//                        //data.CId = Integer.valueOf(id);
+//                        //data.getData().setCId(Integer.valueOf(id));
+// 
+//                        output.writeUTF("valid");
+//                        output.writeUTF(validName);
+//                        output.flush();
+//
+//                    } else {
+//                        System.out.println("Login failed. Please try again.");
+//                        output.writeUTF("invalid");
+//                        output.flush();
+//                    }
+//                } else {
+//                    System.out.println("Username not found. Please try again.");
+//                    //labelText.setText("Username not found. Please try again.");
+//                    output.writeUTF("notfoundUsername");
+//                    output.flush();
+//                }
+//            }
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        }
+//        
+////        output.flush();
+////        output.close();
+//
+//    }
+	
+/////////////////////////////////////////////////////////////////////////////////
+	
+	public void Login() throws IOException {
+	    // Riceve email e password dal client
+	    String username = input.readUTF();
+	    String password = input.readUTF();
+
+	    System.out.println("ClientHadler -> " + username + " " + password);
+	    
+	    try (Connection con = DriverManager.getConnection(globalConn.jdbcURL, globalConn.usernameDb, globalConn.passwordDb)) {
+	        String selectQuery = "SELECT Name FROM Customer WHERE Email = ? OR Psw = ?";
+
+	        try (PreparedStatement preparedStatement = con.prepareStatement(selectQuery)) {
+	            preparedStatement.setString(1, username);
+	            preparedStatement.setString(2, password);
+	            ResultSet resultSet = preparedStatement.executeQuery();
+
+	            if (resultSet.next()) {
+	                String validName = resultSet.getString("Name");
+	                output.writeUTF("LoginSuccessful");
+	                output.writeUTF("Benvenuto, " + validName + "!");
+	            } else {
+	                output.writeUTF("LoginFailed");
+	            }
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	        output.writeUTF("ServerError");
+	    }
+	}
+
+    
+    //funzione per creare un nuovo utente 
+    public void SignUp() throws IOException{
+    	boolean exist = false;  
+        String cF = input.readUTF();
+        String username = input.readUTF();
+        String usersurname = input.readUTF();
+        String tel = input.readUTF();
+        String email = input.readUTF();
+        String password = input.readUTF();
+        String address = input.readUTF();
+        String city = input.readUTF();
+        
+
+        try (Connection con = DriverManager.getConnection(globalConn.jdbcURL, globalConn.usernameDb, globalConn.passwordDb);) {
+
+            // check if cf or email is present on the db
+            String queryCheck = "SELECT CF, Email FROM Customer WHERE CF = ? OR Email = ? LIMIT 1";
+
+            try (PreparedStatement preparedStatement = con.prepareStatement(queryCheck)) {
+                preparedStatement.setString(1, cF);
+                preparedStatement.setString(2, email);
+                ResultSet resultSetCheck = preparedStatement.executeQuery();
+
+                if(resultSetCheck.next()) {
+                    exist = true;
+                    System.out.print("Esiste già l'account\n");
+                    
+                    output.writeUTF("Already existent!");
+                }
+                else {
+                    exist = false;
+                    System.out.print("Non esiste l'account, sarai inserito !\n");
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            if(exist == false) {
+                String insertQuery = "INSERT INTO Customer (CF, Name, Surname, Telphone, Email, Psw, Drop_address, City) VALUE (" + "'" + cF +  "'"+ ", " +  "'" + username +  "'" + ", " + "'" + usersurname + "'" + ", " + "'" + tel + "'" + ", " + "'" + email + "'" + ", " + "'" + password + "'" + ", " + "'" + address + "'" + ", " + "'" + city + "'" + ");";
+
+                try (Statement st = con.createStatement()) {
+                    st.executeUpdate(insertQuery);
+                    System.out.print("Account inserito!\n");
+                    
+                    output.writeUTF("Add account");
+                }
+            }
+
+            con.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        output.flush();
+//        output.close();
+	}
+	
+  
+    @Override
+    public void run() {
+        try {
+            while (true) {
+                String commandToExecute;
+                try {
+                    commandToExecute = input.readUTF();
+                } catch (EOFException e) {
+                    System.out.println("Connessione terminata dal client.");
+                    break;
+                }
+
+                System.out.println("Variabile switch -> " + commandToExecute);
+
+                switch (commandToExecute) {
+                    case "Login":
+                        Login();
+                        break;
+                    case "SignUp":
+                        SignUp();
+                        break;
+                    case "CloseConnection":
+                        System.out.println("Connessione chiusa dal client.");
+                        socket.close();
+                        return; // Esce dal ciclo e termina il thread
+                    default:
+                        System.out.println("Comando non riconosciuto: " + commandToExecute);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}

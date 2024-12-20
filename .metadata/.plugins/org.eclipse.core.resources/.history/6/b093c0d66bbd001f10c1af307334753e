@@ -1,0 +1,649 @@
+package Server;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import Models.Customer;
+import Models.Cart;
+import Models.Product;
+
+import Server.Server.globalConn;
+
+
+public class ClientHandler implements Runnable {
+
+	private Socket socket;
+
+	private DataInputStream input;
+	
+	private DataOutputStream output;
+	
+	private float total;
+	private float pr;
+
+	public ClientHandler(Socket sock) {
+		try {
+			socket = sock;
+			input = new DataInputStream(socket.getInputStream());
+			output = new DataOutputStream(socket.getOutputStream());
+        } catch(IOException e) {
+				e.printStackTrace();
+		}
+	}
+
+	//funzioni da richiamare nello switch
+	
+    public void Login() throws IOException {
+        String username = input.readUTF();
+        String password = input.readUTF();   
+
+        try (Connection con = DriverManager.getConnection(globalConn.jdbcURL, globalConn.usernameDb, globalConn.passwordDb)) {
+            // Query per recuperare i dati dell'utente dal database
+            String selectQuery = "SELECT Id_customer, Name, Email, Psw FROM Customer WHERE Email = ? OR Psw = ?";
+
+            try (PreparedStatement preparedStatement = con.prepareStatement(selectQuery)) {
+                preparedStatement.setString(1, username);
+                preparedStatement.setString(2, password);
+                ResultSet resultSet = preparedStatement.executeQuery();
+
+                if (resultSet.next()) {
+                    String validUsername = resultSet.getString("Email");
+                    String validPassword = resultSet.getString("Psw");
+                    String validName = resultSet.getString("Name");
+                    String id = String.valueOf(resultSet.getInt("Id_customer"));
+
+                    Employer.setName(validName);
+                    if (password.equals(validPassword) && username.equals(validUsername) ) {
+                        System.out.println("Login successful!");
+                        
+                        Costumer.setName(validName);
+                        //Customer.setName();
+                        
+                        data.CId = Integer.valueOf(id);
+                        //data.getData().setCId(Integer.valueOf(id));
+ 
+                        output.writeUTF("valid");
+                        output.writeUTF(validName);
+                        output.flush();
+
+                    } else {
+                        System.out.println("Login failed. Please try again.");
+                        output.writeUTF("invalid");
+                        output.flush();
+                    }
+                } else {
+                    System.out.println("Username not found. Please try again.");
+                    //labelText.setText("Username not found. Please try again.");
+                    output.writeUTF("notfoundUsername");
+                    output.flush();
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+//        output.flush();
+//        output.close();
+
+    }
+    
+    //funzione per creare un nuovo utente 
+    public void SignUp() throws IOException{
+    	boolean exist = false;  
+        String cF = input.readUTF();
+        String username = input.readUTF();
+        String usersurname = input.readUTF();
+        String tel = input.readUTF();
+        String email = input.readUTF();
+        String password = input.readUTF();
+        String address = input.readUTF();
+        String city = input.readUTF();
+        
+
+        try (Connection con = DriverManager.getConnection(globalConn.jdbcURL, globalConn.usernameDb, globalConn.passwordDb);) {
+
+            // check if cf or email is present on the db
+            String queryCheck = "SELECT CF, Email FROM Customer WHERE CF = ? OR Email = ? LIMIT 1";
+
+            try (PreparedStatement preparedStatement = con.prepareStatement(queryCheck)) {
+                preparedStatement.setString(1, cF);
+                preparedStatement.setString(2, email);
+                ResultSet resultSetCheck = preparedStatement.executeQuery();
+
+                if(resultSetCheck.next()) {
+                    exist = true;
+                    System.out.print("Esiste già l'account\n");
+                    
+                    output.writeUTF("Already existent!");
+                }
+                else {
+                    exist = false;
+                    System.out.print("Non esiste l'account, sarai inserito !\n");
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            if(exist == false) {
+                String insertQuery = "INSERT INTO Customer (CF, Name, Surname, Telphone, Email, Psw, Drop_address, City) VALUE (" + "'" + cF +  "'"+ ", " +  "'" + username +  "'" + ", " + "'" + usersurname + "'" + ", " + "'" + tel + "'" + ", " + "'" + email + "'" + ", " + "'" + password + "'" + ", " + "'" + address + "'" + ", " + "'" + city + "'" + ");";
+
+                try (Statement st = con.createStatement()) {
+                    st.executeUpdate(insertQuery);
+                    System.out.print("Account inserito!\n");
+                    
+                    output.writeUTF("Add account");
+                }
+            }
+
+            con.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        output.flush();
+//        output.close();
+	}
+	
+	//aggiungo vino al database
+	void MainFormAdd() throws IOException {
+		
+		String mainFormName = input.readUTF();
+		String mainFormProducer = input.readUTF();
+		String mainFormProvenience = input.readUTF();
+		String mainFormYearProd = input.readUTF();
+		String mainFormDescription = input.readUTF();
+		String mainFormVineyard = input.readUTF();
+		String mainFormQuantity = input.readUTF();
+		String mainFormPrice = input.readUTF();
+        
+            try (Connection con = DriverManager.getConnection(globalConn.jdbcURL, globalConn.usernameDb, globalConn.passwordDb)) {
+                // Query per recuperare i dati dell'utente dal database
+                String checkWineId = "SELECT Name FROM Wine WHERE Name = '" + mainFormName + "'";
+
+                try (PreparedStatement preparedStatement = con.prepareStatement(checkWineId)) {
+                    ResultSet resultSet = preparedStatement.executeQuery();
+
+                    if (resultSet.next()) {
+
+                        output.writeUTF("Error message");
+                        
+                    } else {
+                        String insertData = "INSERT INTO Wine" + "(Name, Producer, Provenience, Production_year, Description, Vineyard_location, Quantity, Price, Path_image)"
+                                + "VALUES (?,?,?,?,?,?,?,?,?)";
+
+                        PreparedStatement prepare = con.prepareStatement(insertData);
+                        prepare.setString(1, mainFormName);
+                        prepare.setString(2, mainFormProducer);
+                        prepare.setString(3, mainFormProvenience);
+                        prepare.setString(4, mainFormYearProd);
+                        prepare.setString(5, mainFormDescription);
+                        prepare.setString(6, mainFormVineyard);
+                        prepare.setString(7, mainFormQuantity);
+                        prepare.setString(8, mainFormPrice);
+
+                        String path = data.path;
+                        path = path.replace("\\", "\\\\");
+
+                        prepare.setString(9, path);
+
+                        prepare.executeUpdate();
+                        
+                        
+                        output.writeUTF("Info message");
+
+                        
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            output.flush();
+//            output.close();
+        }
+	
+	//cancello vino dal database
+	public void MainFormDelete() throws IOException {
+		String mainFormName = input.readUTF();
+		String mainFormYearProd = input.readUTF();
+		
+            try (Connection con = DriverManager.getConnection(globalConn.jdbcURL, globalConn.usernameDb, globalConn.passwordDb)) {
+                // Query per recuperare i dati dell'utente dal database
+                String deleteWine = "DELETE FROM Wine WHERE Name = '" + mainFormName+ "' AND Production_year = '" + mainFormYearProd + "';";
+
+                try (PreparedStatement preparedStatement = con.prepareStatement(deleteWine)) {
+                    int resultSet = preparedStatement.executeUpdate();
+
+                    if (resultSet != 0) {
+                    	output.writeUTF("Info message");
+                        
+                    } else {
+                    	output.writeUTF("Error message");
+                    }
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            
+            output.flush();
+//            output.close();
+    }
+    
+    
+    //lista di vini presenti nel database
+    public void inventoryList() throws IOException {
+
+        try (Connection con = DriverManager.getConnection(globalConn.jdbcURL, globalConn.usernameDb, globalConn.passwordDb)) {
+            // Query per recuperare i dati dell'utente dal database
+            String selectQuery = "SELECT * FROM Wine";
+
+            try (PreparedStatement preparedStatement = con.prepareStatement(selectQuery)) {
+                ResultSet resultSet = preparedStatement.executeQuery();
+                output.writeUTF("correct");
+                
+                while (resultSet.next()) {
+					
+					output.writeUTF(resultSet.getString("Name"));
+					output.writeUTF(resultSet.getString("Producer"));
+					output.writeUTF(resultSet.getString("Provenience"));
+					output.writeUTF(resultSet.getString("Production_year"));
+					output.writeUTF(resultSet.getString("Description"));
+					output.writeUTF(resultSet.getString("Vineyard_location"));
+					output.writeFloat(resultSet.getFloat("Price"));
+					output.writeInt(resultSet.getInt("Quantity"));
+					output.flush();                 
+                }
+                
+                output.writeUTF("Stop");
+                output.flush();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    //utile per caricare la lista dei vini dal database e fare il menu
+    public void menuGetWine() throws IOException {
+
+        try (Connection con = DriverManager.getConnection(globalConn.jdbcURL, globalConn.usernameDb, globalConn.passwordDb)) {
+            // Query per recuperare i dati dell'utente dal database
+            String selectQuery = "SELECT * FROM Wine";
+            //Wine wineBottle;
+            try (PreparedStatement preparedStatement = con.prepareStatement(selectQuery)) {
+                ResultSet resultSet = preparedStatement.executeQuery();
+
+                while (resultSet.next()) {
+                    //wineBottle = new Wine(resultSet.getString("Name"), resultSet.getFloat("Price"),
+                    //        resultSet.getString("Path_image"));
+                    output.writeUTF(resultSet.getString("Name"));
+                    output.writeFloat(resultSet.getFloat("Price"));
+                    output.writeUTF(resultSet.getString("Path_image"));
+                    output.flush();
+                   
+                }
+                output.writeUTF("Stop");
+                output.flush();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    
+    
+private int CId;
+public void CustomerId() throws IOException {
+        try (Connection con = DriverManager.getConnection(globalConn.jdbcURL, globalConn.usernameDb, globalConn.passwordDb)) {
+            // Query per recuperare i dati dell'utente dal database
+            String query = "SELECT MAX(Id_customer) FROM Receipt;";
+
+            try (PreparedStatement preparedStatement = con.prepareStatement(query)) {
+                ResultSet resultSet = preparedStatement.executeQuery();
+
+                if (resultSet.next()) {
+                    CId = resultSet.getInt("MAX(Id_customer)");
+                    
+                }
+
+                String check_CId = "SELECT MAX(Id_customer) FROM ShopCart;";
+                try (PreparedStatement preparedStatement2 = con.prepareStatement(check_CId)) {
+                    ResultSet resultSet2 = preparedStatement2.executeQuery();
+                    int checkId = 0;
+                    if (resultSet2.next()) {
+                        checkId = resultSet2.getInt("MAX(Id_customer)");
+                    }
+
+                    if(CId == 0) {
+                        CId += 1;
+                    } else if (CId == checkId) {
+                        CId += 1;
+                    }
+                    //data.CId = CId;
+                    output.writeInt(CId);
+                    output.flush();
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }    
+    
+    
+    
+    
+    public void MenuGetOrder() throws IOException {
+        
+        //CustomerId();
+  
+        try (Connection con = DriverManager.getConnection(globalConn.jdbcURL, globalConn.usernameDb, globalConn.passwordDb)) {
+            String query = "SELECT * FROM Receipt WHERE Id_customer = " + CId;
+
+            try (PreparedStatement preparedStatement = con.prepareStatement(query)) {
+                ResultSet resultSet = preparedStatement.executeQuery();
+                System.out.println("CId --> " + CId);
+                System.out.println("proceed");
+                String a = "proceed";
+				output.writeUTF(a);
+				output.flush();
+                while (resultSet.next()) {
+                    
+                    
+                    output.writeUTF(resultSet.getString("Name_wine"));
+                    System.out.println("wine --> " + resultSet.getString("Name_wine"));
+                    output.writeInt(resultSet.getInt("Quantity_wine"));
+                    output.writeFloat(resultSet.getFloat("Price"));
+                    output.flush();
+                }
+                output.writeUTF("Stop");
+				output.flush();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private float totalP;
+    //funzione che calcola il totale del prezzo del carrello
+    public void MenuGetTotal() throws IOException {
+        //CustomerId();
+
+        try (Connection con = DriverManager.getConnection(globalConn.jdbcURL, globalConn.usernameDb, globalConn.passwordDb)) {
+            String total = "SELECT SUM(Price) FROM Receipt WHERE Id_customer = " + CId;
+
+            try (PreparedStatement preparedStatement = con.prepareStatement(total)) {
+                ResultSet resultSet = preparedStatement.executeQuery();
+								
+				
+                if (resultSet.next()) {
+                    System.out.println("Calcola totalP");
+                    totalP = resultSet.getFloat("SUM(Price)");
+                    
+                    //Controllo se il prezzo totale esiste
+                    
+                    System.out.println("prezzo totale -> " + totalP);
+                    
+                    output.writeFloat(totalP);
+                    output.flush();
+                }
+
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    //funzione per pagare nel carrello
+    public void MenuPayBtn() throws IOException {
+        
+            MenuGetTotal();
+            //menuShowOrderData();
+
+            try (Connection con = DriverManager.getConnection(globalConn.jdbcURL, globalConn.usernameDb, globalConn.passwordDb)) {
+                String query = "INSERT INTO ShopCart (Id_customer, Total, Date, Id_employer) VALUES (?, ?, ?, ?)";
+
+                //CustomerId();
+
+
+                try (PreparedStatement prepare = con.prepareStatement(query)) {
+                    prepare.setString(1, String.valueOf(CId));
+                    prepare.setString(2, String.valueOf(totalP));
+
+                    java.util.Date date = new java.util.Date();
+                    java.sql.Date sqlDate = new java.sql.Date(date.getTime());
+
+                    prepare.setString(3, String.valueOf(sqlDate));
+                    prepare.setString(4, String.valueOf(data.CId));
+                    //prepare.setString(4, String.valueOf(data.getData().getCId()));
+
+                    int resultSet = prepare.executeUpdate();
+
+                    // if (resultSet != 0)
+
+                    if (resultSet > 0) {
+                    	output.writeUTF("Successfully pay");
+                    }
+                    else {
+                    	output.writeUTF("Pay problem");
+                        
+                    }
+                    output.flush();
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        
+    }
+    
+    //funzione per wine card
+    public void wineAddCardBtn() throws IOException {
+    	
+        //MainFormController mfc = new MainFormController();
+        //WineCardController wcc = new WineCardController();
+        //mfc.CustomerId();
+        int quantity = input.readInt();
+        String wineCardName = input.readUTF();
+        pr = input.readFloat();
+        
+        //FINO A QUA TUTTO OK
+        
+        String check = "";
+
+        try (Connection con = DriverManager.getConnection(globalConn.jdbcURL, globalConn.usernameDb, globalConn.passwordDb)) {
+            // Query per recuperare i dati dell'utente dal database
+            String checkAvailable = "SELECT Status FROM Wine WHERE Name = '"+ wineCardName + "';";
+
+            int check_Qty = 0;
+            String checkQuantity = "SELECT Quantity FROM Wine WHERE Name = '"+ wineCardName +"';";
+
+            try (PreparedStatement preparedStatement3 = con.prepareStatement(checkQuantity)) {
+                ResultSet resultSet3 = preparedStatement3.executeQuery();
+
+                if (resultSet3.next()) {
+                    check_Qty = resultSet3.getInt("Quantity");
+                }
+
+                if(check_Qty == 0) {
+                    String updateQuantity = "UPDATE Wine SET Status = 'unavailable' WHERE Name = '" + wineCardName + "';";
+
+                    try (PreparedStatement preparedStatementUpdate = con.prepareStatement(updateQuantity)) {
+                        //int resultUpdate = preparedStatementUpdate.executeUpdate();
+                        preparedStatementUpdate.executeQuery();
+                    }
+                }
+
+            try (PreparedStatement preparedStatement = con.prepareStatement(checkAvailable)) {
+                ResultSet resultSet = preparedStatement.executeQuery();
+
+                if (resultSet.next()) {
+                    check = resultSet.getString("Status");
+                   
+
+                if (!check.equals("available") || quantity == 0) {
+                	
+                	output.writeUTF("Not available");
+                	output.flush();
+                }
+                else {
+                        if (check_Qty < quantity) {
+                        	
+                        	output.writeUTF("Product out of stock!");
+                        	output.flush();
+                        }
+                        else {
+                            String insertData = "INSERT INTO Receipt " + "(Id_customer, Name_employer, Name_wine, Quantity_wine, Price, Date) " +
+                                    "VALUES (?,?,?,?,?,?);";
+
+                            try (PreparedStatement preparedStatement2 = con.prepareStatement(insertData)) {
+                                preparedStatement2.setString(1, String.valueOf(data.CId));
+                            	//preparedStatement2.setString(1, String.valueOf(data.getData().getCId()));
+                                preparedStatement2.setString(2, Costumer.getName());
+                                preparedStatement2.setString(3, wineCardName);
+                                preparedStatement2.setInt(4, quantity);
+                                total = (quantity * pr);
+                                preparedStatement2.setString(5, String.valueOf(total));
+
+                                java.util.Date date = new java.util.Date();
+                                java.sql.Date sqlDate = new java.sql.Date(date.getTime());
+                                preparedStatement2.setString(6, String.valueOf(sqlDate));
+
+                                int result = preparedStatement2.executeUpdate();
+
+                                int updQuantity = check_Qty - quantity;
+
+                                String UpdateQuantity = "UPDATE Wine SET Quantity = '" + updQuantity + "' WHERE Name = '" + wineCardName + "';";
+
+                                try (PreparedStatement preparedStatement5 = con.prepareStatement(UpdateQuantity)) {
+                                    int resultSet5 = preparedStatement5.executeUpdate();
+                                    if(resultSet5 != 0) {
+                                        System.out.println("Update!");
+                                        String a = "Update!";
+                                        output.writeUTF(a);
+                                        output.flush();
+                                    }
+                                    else {
+                                        System.out.println("Error not Update!");
+                                        output.writeUTF("Error not Update!");
+                                        output.flush();
+                                    }
+                                }
+
+                            } catch (SQLException e) {
+                            	output.writeUTF("Error update");
+                                output.flush();
+                                e.printStackTrace();
+                            }
+                        }
+                    	  //mfc.MenuGetTotal();
+                    	  
+                    	  output.writeUTF("menuGetTotal");
+                    	  output.flush();
+                    }
+				  }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+/*        if(wcc.getQuantity() == 0) {
+        	output.writeUTF("quantity zero");
+            output.flush();
+        } else {
+        	output.writeUTF("quantity not zero");
+            output.flush();
+		}*/
+        
+    }
+    
+	@Override
+	public void run() {
+
+		try {
+			while(true) {
+
+			String commandToExecute = input.readUTF();
+			System.out.println("variabile switch -> " + commandToExecute);
+
+
+			  // Perform the requested calculation
+			if(commandToExecute == "CloseConnection") {
+				socket.close();
+		    	break;
+			}
+			
+			switch (commandToExecute) {
+				case "Login":
+					Login();
+					break;
+				case "SignUp": 
+			      SignUp();
+			      break;
+		    case "MainFormAdd":  
+		      MainFormAdd();
+		      break;
+		    case "MainFormDelete": 
+		      MainFormDelete();
+		      break;
+		    case "inventoryList": 
+		    	inventoryList();
+			      break;
+		    case "menuGetWine": 
+			      menuGetWine();
+			      break;
+		    case "CustomerId": 
+			      CustomerId();
+			      break;
+		    case "MenuGetOrder": 
+			      MenuGetOrder();
+			      break;
+		    case "MenuGetTotal": 
+			      MenuGetTotal();
+			      break;
+		    case "MenuPayBtn": 
+		    	  MenuPayBtn();
+			      break;
+		    case "wineAddCardBtn": 
+		    	wineAddCardBtn();
+			      break;
+			}
+			//output.flush();
+		} 
+
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+    
+	}
+}

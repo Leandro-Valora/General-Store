@@ -1,0 +1,124 @@
+package Client;
+
+import java.sql.*;
+import java.util.Scanner;
+import Models.*;
+//nuovo lib
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+
+
+public class Client {
+	public static Customer LoginCustomer() {
+        boolean success = false;
+        System.out.println("Welcome to the Console Login Page\n");
+        Scanner scanner = new Scanner(System.in);
+        Customer customer = new Customer(null, null);
+        do
+        {
+        	System.out.print("Enter your email: ");
+            String username = scanner.nextLine();
+
+            System.out.print("Enter your password: ");
+            String password = scanner.nextLine();
+            
+            if(!username.isEmpty() && !password.isEmpty()) {
+            	success = true;
+            	customer.setEmail(username);
+            	customer.setPassword(password);
+            }
+        } while(success == false);
+        
+        //TODO credenziale sbagliata non viene richiata la funzione login
+     
+        scanner.close();
+        return customer;
+    }
+	
+	public static void main(String args[])
+    {  
+		System.out.printf(" ---------------\n");
+        System.out.printf("| General Store |");
+        System.out.printf("\n ---------------\n");
+        
+        //LoginCustomer();
+        //nuovo codice chatgpt
+        
+        final String SERVER_IP = "127.0.0.1"; // Usa "localhost" o l'indirizzo IP del server
+        final int SERVER_PORT = 6789;
+
+        try (Socket socket = new Socket(SERVER_IP, SERVER_PORT);
+             DataInputStream input = new DataInputStream(socket.getInputStream());
+             DataOutputStream output = new DataOutputStream(socket.getOutputStream());
+             Scanner scanner = new Scanner(System.in)) {
+
+            System.out.println("Connesso al server!");
+
+            while (true) {
+                System.out.println("Scegli un'opzione:\n1. Login\n2. SignUp\n3. Exit");
+                String choice = scanner.nextLine();
+
+                switch (choice) {
+                    case "1":
+                        output.writeUTF("Login");
+                        output.flush();
+
+                        System.out.print("Inserisci email: ");
+                        String email = scanner.nextLine();
+                        System.out.print("Inserisci password: ");
+                        String password = scanner.nextLine();
+
+                        output.writeUTF(email);
+                        output.writeUTF(password);
+                        output.flush();
+
+                        String serverResponse = input.readUTF();
+                        System.out.println("Risposta del server: " + serverResponse);
+                        break;
+
+                    case "2":
+                        output.writeUTF("SignUp");
+                        output.flush();
+
+                        System.out.println("Inserisci i dettagli del nuovo utente:");
+                        System.out.print("CF: ");
+                        output.writeUTF(scanner.nextLine());
+                        System.out.print("Nome: ");
+                        output.writeUTF(scanner.nextLine());
+                        System.out.print("Cognome: ");
+                        output.writeUTF(scanner.nextLine());
+                        System.out.print("Telefono: ");
+                        output.writeUTF(scanner.nextLine());
+                        System.out.print("Email: ");
+                        output.writeUTF(scanner.nextLine());
+                        System.out.print("Password: ");
+                        output.writeUTF(scanner.nextLine());
+                        System.out.print("Indirizzo: ");
+                        output.writeUTF(scanner.nextLine());
+                        System.out.print("Città: ");
+                        output.writeUTF(scanner.nextLine());
+                        output.flush();
+
+                        serverResponse = input.readUTF();
+                        System.out.println("Risposta del server: " + serverResponse);
+                        break;
+
+                    case "3":
+                        output.writeUTF("CloseConnection");
+                        output.flush();
+                        System.out.println("Connessione chiusa.");
+                        return;
+
+                    default:
+                        System.out.println("Opzione non valida!");
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    }
+
+}

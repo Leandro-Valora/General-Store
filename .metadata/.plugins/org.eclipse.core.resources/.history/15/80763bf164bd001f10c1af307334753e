@@ -1,0 +1,10 @@
+package Models;
+
+public class Cart {
+
+	private int idCartCust;
+	private int idCartProd;
+	private int numProduct;
+	
+	
+}

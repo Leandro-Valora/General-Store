@@ -1,0 +1,41 @@
+package Server;
+
+import java.net.ServerSocket;
+import java.net.Socket;
+
+private ServerSocket server = null;
+public static final int PORT = 6789;
+
+public Server() {
+	try {
+		server = new ServerSocket(PORT);
+		while (true)
+			iniConnections();
+	} catch (Exception io) {
+		System.out.println("public server");
+		io.printStackTrace();
+	}
+}
+
+public static class globalConn {
+    public static String jdbcURL = "jdbc:mysql://mysql-svalora.alwaysdata.net:3306/svalora_wineshop";
+    public static String usernameDb = "svalora_wineshop";
+    public static String passwordDb = "Wine-shop1!";
+}
+
+
+public void iniConnections() throws Exception {
+	Socket socket = server.accept();
+	System.out.println("Ini. connessione...");
+    final ClientHandler client = new ClientHandler(socket);
+
+    // Give the handler its own thread
+    final Thread thread = new Thread(client);
+    thread.start();
+}
+
+
+public static void main(String[] arg) throws Exception {
+	new Server();
+
+}

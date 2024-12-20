@@ -1,0 +1,85 @@
+package Models;
+
+/**
+ * @author A. F. Valora
+ * @author D. Carattin
+ * @version 1.0
+ * This Class is used to contain information about the customer
+ */
+public class Customer {
+
+	private int idCustomer;
+	private String name;
+	private String email;
+	private String password;
+	
+	/**
+	 * Constructor  
+	 * @param idCustomer
+	 * @param name
+	 * @param email
+	 * @param password
+	 */
+	public Customer(int idCustomer, String name, String email, String password) {
+		this.idCustomer = idCustomer;
+		this.name = name;
+		this.email = email;
+		this.password = password;
+		}
+	
+	/**
+	 * Get Number id of the customer
+	 * @return customers' id
+	 */
+	public int getIdCustomer() {
+		return idCustomer;
+	}
+
+	/**
+	 * Get the customer name
+	 * @return customers' name
+	 */
+	public String getName() {
+		return name;
+	}
+	
+	/**
+	 * Get the email of the customer used for access 
+	 * @return customers' email
+	 */
+	public String getEmail() {
+		return email;
+	}
+
+	/**
+	 * Get the password of the customer used for access
+	 * @return customers' password
+	 */
+	public String getPassword() {
+		return password;
+	}
+
+	/**
+	 * Set the name of the customer
+	 * @param name customer
+	 */
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	/**
+	 * Set the email of the customer
+	 * @param email customer
+	 */
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	/**
+	 * Set the password of the customer
+	 * @param password customer
+	 */
+	public void setPassword(String password) {
+		this.password = password;
+	}
+}
